@@ -178,7 +178,7 @@ class GoBoardUtil(object):
             board2d[row, :] = goboard.board[start : start + size]
         return board2d
     
-    def show_color(self,pos):
+    def show_color(pos):
         if pos == EMPTY:
             return '.'
         elif pos == WHITE:
