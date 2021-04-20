@@ -27,6 +27,60 @@ def game_result(board):
         return 'draw'
     return None
 
+class HeuristicPolicy:
+    def optimal_move(self,board,color):
+        moves = board.get_empty_points()
+        result = list(map(lambda m: (m, self._score(board, color, m)), moves))
+        return sorted(moveResults, key=lambda res: res[1], reverse=True)
+    
+    def _score(self,board,color,m):
+        board.play_move(m, board.current_player)
+        score = evaluate(board,color)
+        board.undo_move(m)
+        return score
+    
+class RulePolicy:
+    def optimal_move(self,board,color):
+        result = []
+        for move in board.get_empty_points():
+            score = self.check_move(board,color,move)
+            result.append((move,score))
+        result.sort(reverse=True, key=lambda x: x[1])
+        return result
+    
+    def check_move(self, board, color, move):
+        board.play_move_gomoku(move, color)
+        
+        row = move // (board.size+1) -1
+        col = move % (board.size+1) -1
+        newPoint = row*board.size+col
+        
+        maxScore = 0
+        # haven't get lines yet
+        board.undo_move(move)
+        return maxScore
+    
+class CombinedPolicy:
+    def __init__(self):
+        self.rule_policy = RulePolicy()
+        self.h_policy = HeuristicPolicy()
+        
+    def optimal_move(self,board,color):
+        rule = self.rule_policy.optimal_move(board,color)
+        best_move = []
+        score = 0
+        for move in rule:
+            if move[1] > score:
+                score = move[1]
+            if move[1] < score:
+                break
+            best_move.append(move)
+            
+        if len(best_move) > 0:
+            return best_move
+        
+        return self.h_policy.optimal_move(board,color)
+
 class GomokuSimulationPlayer(object):
     """
     For each move do `n_simualtions_per_move` playouts,
