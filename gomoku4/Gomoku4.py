@@ -9,6 +9,11 @@ from simple_board import SimpleGoBoard
 import random
 import numpy as np
 
+WIN = 4
+BLOCK_WIN = 3
+OPEN_FOUR = 2
+BLOCK_OPEN_FOUR = 1
+
 def undo(board,move):
     board.board[move]=EMPTY
     board.current_player=GoBoardUtil.opponent(board.current_player)
@@ -96,19 +101,46 @@ class RulePolicy:
         newPoint = row*board.size+col
         
         maxScore = 0
-        lines=[]
+        line5=[]
         for i in range(board.size*board.size):
             points = board.rows+board.cols+board.diags
-            lines.append(points)
+            line5.append(points)
         board.undo_move(move)
-        spec_line=lines[newPoint]
-        for l in spec_line:
+        spec_line5=line5[newPoint]
+        for l in spec_line5:
             for p in l:
                 cond,win_color = board.check_game_end_gomoku()
                 if win_color==color:
                     return 4
                 elif board.detect_blockwin(color)!=None:
                     maxScore=max(3, maxScore)
+
+        line6=[]
+        diag6=[]
+        for d in self.diags:
+            if len(d)>=6:
+                diag6.append(d)
+        for i in range(board.size*board.size):
+            points = board.rows+board.cols+diag6
+            line6.append(points)
+        spec_line6=line6[newPoint]
+        for l in spec_line6:
+            head=board.board[l[0]]
+            tail=board.board[l[-1]]
+            for p in l:
+                if board.detect_openfour(color)!=None and head==EMPTY and tail==EMPTY:
+                    maxScore = max(OPEN_FOUR, maxScore)
+                elif board.detect_blockopenfour(color)!=None and head==color and tail==color:
+                    blocked=False
+                    if head==None or tail==None:
+                        opponent_optimal=optimal_move(board,GoBoardUtil.opponent(color))
+                        if opponent_optimal[0][1] < OPEN_FOUR:
+                            blocked=True
+                    else:
+                        blocked=True
+                    if blocked:
+                        maxScore = max(BLOCK_OPEN_FOUR, maxScore)
+                        
         board.undo_move(move)
         return maxScore
     

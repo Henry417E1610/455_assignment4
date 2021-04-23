@@ -73,6 +73,7 @@ class SimpleGoBoard(object):
         """
         assert 2 <= size <= MAXSIZE
         self.reset(size)
+        self.calculate_rows_cols_diags()
 
     def reset(self, size):
         """
@@ -586,6 +587,66 @@ class SimpleGoBoard(object):
         assert len(self.rows) == self.size
         assert len(self.cols) == self.size
         assert len(self.diags) == (2 * (self.size - 5) + 1) * 2
+        
+    def calculate_rows_cols_diags(self):
+        if self.size < 5:
+            return
+        # precalculate all rows, cols, and diags for 5-in-a-row detection
+        self.rows = []
+        self.cols = []
+        for i in range(1, self.size + 1):
+            current_row = []
+            start = self.row_start(i)
+            for pt in range(start, start + self.size):
+                current_row.append(pt)
+            self.rows.append(current_row)
+            
+            start = self.row_start(1) + i - 1
+            current_col = []
+            for pt in range(start, self.row_start(self.size) + i, self.NS):
+                current_col.append(pt)
+            self.cols.append(current_col)
+        
+        self.diags = []
+        # diag towards SE, starting from first row (1,1) moving right to (1,n)
+        start = self.row_start(1)
+        for i in range(start, start + self.size):
+            diag_SE = []
+            pt = i
+            while self.get_color(pt) == EMPTY:
+                diag_SE.append(pt)
+                pt += self.NS + 1
+            if len(diag_SE) >= 5:
+                self.diags.append(diag_SE)
+        # diag towards SE and NE, starting from (2,1) downwards to (n,1)
+        for i in range(start + self.NS, self.row_start(self.size) + 1, self.NS):
+            diag_SE = []
+            diag_NE = []
+            pt = i
+            while self.get_color(pt) == EMPTY:
+                diag_SE.append(pt)
+                pt += self.NS + 1
+            pt = i
+            while self.get_color(pt) == EMPTY:
+                diag_NE.append(pt)
+                pt += -1 * self.NS + 1
+            if len(diag_SE) >= 5:
+                self.diags.append(diag_SE)
+            if len(diag_NE) >= 5:
+                self.diags.append(diag_NE)
+        # diag towards NE, starting from (n,2) moving right to (n,n)
+        start = self.row_start(self.size) + 1
+        for i in range(start, start + self.size):
+            diag_NE = []
+            pt = i
+            while self.get_color(pt) == EMPTY:
+                diag_NE.append(pt)
+                pt += -1 * self.NS + 1
+            if len(diag_NE) >=5:
+                self.diags.append(diag_NE)
+        assert len(self.rows) == self.size
+        assert len(self.cols) == self.size
+        assert len(self.diags) == (2 * (self.size - 5) + 1) * 2
 
     def row_start(self, row):
         assert row >= 1
@@ -613,6 +674,37 @@ class SimpleGoBoard(object):
                     if empty != -1 and empty not in winning_moves:
                         winning_moves.append(empty)
             return winning_moves    
+        
+    def detect_openfour(self, player):
+            # Detect whether if a player can create an open four in the move, then return the possible move(s)
+            positions = self.board_positions()
+            winning_moves = []
+    
+            for pos in positions:
+    
+                for i in range(len(pos) - 5):
+                    if self.get_color(pos[i]) != EMPTY or self.get_color(pos[i + 5]) != EMPTY:
+                        continue
+    
+                    empty = -1
+                    for position in pos[i+1 : i+5]:
+                        color = self.get_color(position)
+    
+                        if color == EMPTY:
+                            if empty == -1:
+                                empty = position
+                            else:
+                                empty = -1
+                                break
+    
+                        elif color == GoBoardUtil.opponent(player):
+                            empty = -1
+                            break
+    
+                    if empty != -1 and empty not in winning_moves:
+                        winning_moves.append(empty)
+    
+            return winning_moves    
 
     def detect_blockwin(self, player):
             # Notify if the opponent can reach to win, then return the possible position(s) so that the player can block it
@@ -621,3 +713,45 @@ class SimpleGoBoard(object):
             self.current_player = player
     
             return blocking_winning
+        
+    def detect_blockopenfour(self, player) :
+            # Notify if the opponent can reach an open four, then return the possible position(s) so that the player can block it
+            positions = self.board_positions()
+            blocking_moves = []
+    
+            for pos in positions:
+                for i in range(len(pos) - 5): 
+    
+                    if self.get_color(pos[i]) != EMPTY or self.get_color(pos[i + 5]) != EMPTY:
+                        continue
+    
+                    emptyPos = -1
+                    for point in pos[i + 1: i + 5]:
+                        stone = self.get_color(point)
+                        if stone == EMPTY:
+                            if emptyPos == -1:
+                                emptyPos = point
+                            else:
+                                emptyPos = -1
+                                break
+                        elif stone == player:
+                            emptyPos = -1
+                            break
+    
+                    if emptyPos != -1:
+                        moves = [emptyPos]
+                        if i == 0:
+    
+                            moves.append(pos[5])
+                            if emptyPos != pos[1]:
+                                moves.append(pos[0])
+                        elif i == len(pos) - 6:
+    
+                            moves.append(pos[i])
+                            if emptyPos != pos[i + 4]:
+                                moves.append(pos[i + 5])
+                        for move in moves:
+                            if move not in blocking_moves:
+                                blocking_moves.append(move)
+    
+            return blocking_moves    
