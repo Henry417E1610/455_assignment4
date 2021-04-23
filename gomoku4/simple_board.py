@@ -527,18 +527,3 @@ class SimpleGoBoard(object):
         else:
             return list(moveSet[i])
 
-    def count_piece(self, line):
-        blacks = 0
-        whites = 0
-        empties = 0
-
-        for p in line:
-            stone = self.board[p]
-            if stone == BLACK:
-                blacks += 1
-            elif stone == WHITE:
-                whites += 1
-            else:
-                empties += 1
-
-        return blacks, whites, empties
