@@ -14,7 +14,6 @@ EMPTY = 0
 BLACK = 1
 WHITE = 2
 BORDER = 3
-DRAW = 4
 
 def is_black_white(color):
     return color == BLACK or color == WHITE
@@ -178,10 +177,3 @@ class GoBoardUtil(object):
             board2d[row, :] = goboard.board[start : start + size]
         return board2d
     
-    def show_color(pos):
-        if pos == EMPTY:
-            return '.'
-        elif pos == WHITE:
-            return '1'
-        else:
-            return '0'
