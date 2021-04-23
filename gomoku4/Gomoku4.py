@@ -3,7 +3,7 @@
 # Set the path to your python3 above
 
 from gtp_connection import GtpConnection
-from board_util import GoBoardUtil, EMPTY
+from board_util import GoBoardUtil, EMPTY, BLACK, WHITE
 from simple_board import SimpleGoBoard
 
 import random
@@ -35,10 +35,50 @@ class HeuristicPolicy:
     
     def _score(self,board,color,m):
         board.play_move(m, board.current_player)
-        score = evaluate(board,color)
+        score = self.evaluate(board,color)
         board.undo_move(m)
         return score
-    
+
+    def calculate_score(self,counts, color):
+        category = [0, 1, 2, 5, 15, 1000000]
+        if color == BLACK:
+            player, opponent, empty = counts
+        else:
+            opponent, player, empty = counts
+
+        # Is blocked
+        if player >= 1 and opponent >= 1:
+            return 0
+        return category[player]-category[opponent]
+
+
+    def evaluate(self,board, color):
+        score = 0
+        lines = board.rows + board.cols + board.diags
+
+        for line in lines:
+            for i in range(len(line) - 4):
+                counts = self.get_counts(board, line[i:i+5])
+                score += calculate_score(counts, color)
+
+        return score
+
+    def get_counts(self,board, five_line):
+        blacks = 0
+        whites = 0
+        empties = 0
+
+        for p in five_line:
+            stone = board.board[p]
+            if stone == BLACK:
+                blacks += 1
+            elif stone == WHITE:
+                whites += 1
+            else:
+                empties += 1
+
+    return blacks, whites, empties
+
 class RulePolicy:
     def optimal_move(self,board,color):
         result = []
@@ -56,7 +96,19 @@ class RulePolicy:
         newPoint = row*board.size+col
         
         maxScore = 0
-        # haven't get lines yet
+        lines=[]
+        for i in range(board.size*board.size):
+            points = board.rows+board.cols+board.diags
+            lines.append(points)
+        board.undo_move(move)
+        spec_line=lines[newPoint]
+        for l in spec_line:
+            for p in l:
+                cond,win_color = board.check_game_end_gomoku()
+                if win_color==color:
+                    return 4
+                elif board.detect_blockwin(color)!=None:
+                    maxScore=max(3, maxScore)
         board.undo_move(move)
         return maxScore
     
