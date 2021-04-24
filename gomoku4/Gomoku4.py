@@ -5,7 +5,10 @@
 from gtp_connection import GtpConnection
 from board_util import GoBoardUtil, EMPTY, BLACK, WHITE
 from simple_board import SimpleGoBoard
+from mcts import MCTStree
 
+import sys
+import signal
 import random
 import numpy as np
 
@@ -183,6 +186,7 @@ class GomokuSimulationPlayer(object):
         self.name="Gomoku3"
         self.version = 3.0
         self.best_move=None
+        self.timelimit = 59
     
     def set_playout_policy(self, playout_policy='random'):
         assert(playout_policy in ['random', 'rule_based'])
@@ -226,6 +230,7 @@ class GomokuSimulationPlayer(object):
         """
         The genmove function called by gtp_connection
         """
+        signal.alarm(self.timelimit)
         moves=GoBoardUtil.generate_legal_moves_gomoku(board)
         toplay=board.current_player
         best_result, best_move=-1.1, None
@@ -250,6 +255,15 @@ class GomokuSimulationPlayer(object):
                     best_move=move
                     self.best_move=best_move
                 undo(board, move)
+                
+                try:
+                    mtree=MCTStree(board, color, CombinedPolicy())
+                except TimeoutException:
+                    return mtree.optimal_move()
+                except Exception:
+                    return mtree.optimal_move()             
+        
+        signal.alarm(0)
         assert(best_move is not None)
         return best_move
 
