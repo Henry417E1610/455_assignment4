@@ -17,7 +17,7 @@ import alphabeta
 
 class SimpleGoBoard(object):
   
-    def __hash__(self) -> int:
+    def __hash__(self):
         return hash(str(self.board))
 
     def get_color(self, point):
