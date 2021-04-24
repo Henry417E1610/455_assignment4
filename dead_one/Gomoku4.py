@@ -85,7 +85,7 @@ class HeuristicPolicy:
             else:
                 empties += 1
 
-    return blacks, whites, empties
+        return blacks, whites, empties
 
 class RulePolicy:
     def optimal_move(self,board,color):
@@ -114,9 +114,9 @@ class RulePolicy:
             for p in l:
                 cond,win_color = board.check_game_end_gomoku()
                 if win_color==color:
-                    return WIN
+                    return 4
                 elif board.detect_blockwin(color)!=None:
-                    maxScore=max(BLOCK_WIN, maxScore)
+                    maxScore=max(3, maxScore)
 
         line6=[]
         diag6=[]
