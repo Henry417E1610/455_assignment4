@@ -88,4 +88,7 @@ class MCTStree:
             
         return next_node, copy
 
-        
+def mcts_step(mtree):
+    selected=mtree.select()
+    new_node,copy = tree.expand(selected)
+    

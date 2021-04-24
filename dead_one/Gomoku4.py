@@ -258,6 +258,7 @@ class GomokuSimulationPlayer(object):
                 
                 try:
                     mtree=MCTStree(board, color, CombinedPolicy())
+                    mcts_step(mtree)
                 except TimeoutException:
                     return mtree.optimal_move()
                 except Exception:
