@@ -114,9 +114,9 @@ class RulePolicy:
             for p in l:
                 cond,win_color = board.check_game_end_gomoku()
                 if win_color==color:
-                    return 4
+                    return WIN
                 elif board.detect_blockwin(color)!=None:
-                    maxScore=max(3, maxScore)
+                    maxScore=max(BLOCK_WIN, maxScore)
 
         line6=[]
         diag6=[]
